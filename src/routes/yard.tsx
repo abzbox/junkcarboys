@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ListingCard } from "@/components/listing-card";
@@ -22,6 +22,8 @@ export const Route = createFileRoute("/yard")({
     miles: typeof search.miles === "string" ? search.miles : "",
     offers: typeof search.offers === "string" ? search.offers : "",
     saved: typeof search.saved === "string" ? search.saved : "",
+    engine: typeof search.engine === "string" ? search.engine : "",
+    fit: typeof search.fit === "string" ? search.fit : "",
   }),
   head: () => ({ meta: [{ title: "Find Parts — Junk Car Boys" }] }),
   component: YardPage,
@@ -69,6 +71,26 @@ function YardPage() {
           <option key={make}>{make}</option>
         ))}
       </select>
+      <label className={labelCls} htmlFor="f-engine">
+        Engine or trim
+      </label>
+      <input
+        id="f-engine"
+        className={field}
+        value={search.engine}
+        placeholder="5.0, EcoBoost, XLT"
+        onChange={(event) => update({ engine: event.target.value })}
+      />
+      <label className={labelCls} htmlFor="f-fit">
+        OEM number or VIN
+      </label>
+      <input
+        id="f-fit"
+        className={field}
+        value={search.fit}
+        placeholder="Casting number or VIN"
+        onChange={(event) => update({ fit: event.target.value })}
+      />
       <label className={labelCls} htmlFor="f-source">
         Who has it
       </label>
@@ -135,9 +157,12 @@ function YardPage() {
         <div>
           <h1 className="font-display text-4xl font-extrabold text-fg italic">Find parts</h1>
           <p className="text-muted">
-            {results.length} {results.length === 1 ? "part matches" : "parts match"}
+            {results.length} {results.length === 1 ? "part matches" : "parts match"}. Sample tags are examples, not a live yard feed.
           </p>
         </div>
+        <Link to="/sell" className={btn()}>
+          List a part
+        </Link>
         <label className="sr-only" htmlFor="sort">
           Sort
         </label>

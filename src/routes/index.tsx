@@ -58,6 +58,7 @@ function Home() {
   const [year, setYear] = useState("");
   const [part, setPart] = useState("");
   const [where, setWhere] = useState("Worcester");
+  const [fit, setFit] = useState("");
   const [tab, setTab] = useState("all");
   const [sort, setSort] = useState("new");
 
@@ -93,11 +94,12 @@ function Home() {
             void navigate({
               to: "/yard",
               search: yardQuery({
+                q: bits.join(" "),
                 make,
                 model,
                 year,
                 cat: chosen?.category ?? "",
-                q: bits.join(" "),
+                fit,
               }),
             });
           }}
@@ -138,6 +140,16 @@ function Home() {
               Search parts
             </button>
           </div>
+          <label className="mt-2 block text-xs font-bold tracking-wide text-white/70 uppercase" htmlFor="s-fit">
+            Engine, trim, OEM number, or VIN
+            <input
+              id="s-fit"
+              value={fit}
+              onChange={(event) => setFit(event.target.value)}
+              placeholder="5.0, XLT, a casting number, or a VIN"
+              className="mt-1 min-h-12 w-full rounded-xl border border-white/15 bg-black px-3 text-base font-semibold text-white normal-case"
+            />
+          </label>
         </form>
 
         <ul className="grid grid-cols-2 gap-3 py-6 sm:grid-cols-3 lg:grid-cols-5">
@@ -195,7 +207,7 @@ function Home() {
                 ))}
               </ul>
               <Link to="/sell" className="mt-4 inline-flex min-h-12 items-center rounded-full bg-[#ff6a00] px-5 font-extrabold text-white">
-                Post your parts
+                List a part
               </Link>
             </aside>
             <aside className="overflow-hidden rounded-2xl border border-white/10 bg-[#d7e6ee] text-neutral-950">
@@ -237,6 +249,7 @@ function Home() {
         <section className="pb-10">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-display text-2xl font-extrabold italic">Featured marketplace listings</h2>
+            <p className="text-sm text-white/60">Sample tags, not live yard stock. Each card says Sample until a seller posts their own.</p>
             <label className="text-sm font-semibold">
               Sort by
               <select className="ml-2 min-h-11 rounded-lg border border-white/15 bg-black px-2" value={sort} onChange={(event) => setSort(event.target.value)}>

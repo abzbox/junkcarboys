@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, MapPin } from "lucide-react";
 import type { Condition, Listing } from "@/lib/catalog";
+import { listingFacts } from "@/lib/catalog";
 import { money, yearsLabel } from "@/lib/format";
 import { useBoard } from "@/lib/store";
 
@@ -22,6 +23,7 @@ export function ListingCard({ listing, layout = "market" }: { listing: Listing; 
   const saved = useBoard((state) => state.saved.includes(listing.id));
   const toggleSave = useBoard((state) => state.toggleSave);
   const fit = `${yearsLabel(listing.yearStart, listing.yearEnd)} ${listing.make} ${listing.model}`;
+  const facts = listingFacts(listing);
 
   return (
     <article className="relative flex flex-col overflow-hidden rounded-xl bg-white text-neutral-950 shadow-md">
@@ -42,14 +44,17 @@ export function ListingCard({ listing, layout = "market" }: { listing: Listing; 
             className="h-full w-full object-cover"
             style={{ objectPosition: focus(listing.id) }}
           />
-          {layout === "stock" && listing.status === "active" ? (
-            <span className="absolute bottom-2 left-2 rounded bg-emerald-600 px-2 py-1 text-xs font-bold text-white">In stock</span>
-          ) : null}
           {listing.status === "sold" ? (
             <span className="absolute inset-x-0 bottom-0 bg-black/80 py-1 text-center text-sm font-bold tracking-wide text-white uppercase">
               Sold
             </span>
-          ) : null}
+          ) : (
+            <span
+              className={`absolute bottom-2 left-2 rounded px-2 py-1 text-xs font-bold ${facts.sample ? "bg-amber-400 text-neutral-950" : "bg-emerald-700 text-white"}`}
+            >
+              {facts.label}
+            </span>
+          )}
         </div>
         <div className="flex flex-1 flex-col gap-1 p-3">
           {layout === "market" ? (

@@ -3,7 +3,7 @@ import { Bookmark, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ListingCard } from "@/components/listing-card";
 import { btn, field, labelCls, Page, Stamp } from "@/components/ui";
-import { MAKES, VEHICLES, YARD_TIPS, categoryLabel } from "@/lib/catalog";
+import { MAKES, VEHICLES, YARD_TIPS, categoryLabel, listingFacts } from "@/lib/catalog";
 import { ago, money, yearsLabel } from "@/lib/format";
 import { yardQuery } from "@/lib/search";
 import { useBoard } from "@/lib/store";
@@ -63,6 +63,12 @@ function ListingPage() {
         (item.part === listing.part || (item.make === listing.make && item.model === listing.model)),
     )
     .slice(0, 3);
+  const facts = listingFacts(listing);
+  const ask = encodeURIComponent(`Check availability — ${listing.title}`);
+  const askBody = encodeURIComponent(
+    `Part: ${listing.title}\nPrice on the tag: ${money(listing.price)}\nCore on the tag: ${money(facts.core)}\nBin: ${listing.bin ?? "none"}\nSeller: ${listing.yardName ?? listing.sellerName}\n\nIs this still available? This is not a hold.`,
+  );
+  const mailto = `mailto:${facts.contact}?subject=${ask}&body=${askBody}`;
 
   return (
     <Page className="py-6">
@@ -71,6 +77,10 @@ function ListingPage() {
           {categoryLabel(listing.category)}
         </Link>
       </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Stamp>{facts.label}</Stamp>
+        <p className="text-sm text-muted">{facts.checked}</p>
+      </div>
       <div className="mt-3 grid gap-6 md:grid-cols-5">
         <div className="md:col-span-3">
           <div className="relative overflow-hidden border border-line bg-raised">
@@ -85,13 +95,23 @@ function ListingPage() {
           <p className="mt-2 text-muted">{listing.description}</p>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <Info label="Fits" value={`${yearsLabel(listing.yearStart, listing.yearEnd)} ${listing.make} ${listing.model}`} />
-            <Info label="Interchange" value={listing.engineNote} />
+            <Info label="Interchange" value={facts.engine} />
+            <Info label="Trim" value={facts.trim || "Not listed"} />
+            <Info label="OEM number" value={facts.oem || "Not on this tag. Match the number on the part."} />
             <Info label="Condition" value={listing.condition} />
             <Info label="Donor miles" value={listing.donorMiles ?? "Not listed"} />
             <Info label="Warranty" value={listing.warranty} />
             <Info label="Posted" value={ago(listing.postedAt)} hydrate />
           </dl>
-          <FitCheck yearStart={listing.yearStart} yearEnd={listing.yearEnd} make={listing.make} model={listing.model} />
+          <FitCheck
+            yearStart={listing.yearStart}
+            yearEnd={listing.yearEnd}
+            make={listing.make}
+            model={listing.model}
+            engineNote={facts.engine}
+            trim={facts.trim}
+            oem={facts.oem}
+          />
           <ul className="mt-4 grid gap-2">
             {YARD_TIPS.slice(0, 3).map((tip) => (
               <li key={tip} className="border border-line px-3 py-2 text-sm text-muted">
@@ -102,9 +122,14 @@ function ListingPage() {
         </div>
         <aside className="md:col-span-2">
           <div className="border border-line bg-surface p-4 md:sticky md:top-24">
+            <p className="text-xs tracking-widest text-faint uppercase">Price on this tag</p>
             <p className="font-display text-5xl leading-none text-fg tabular-nums">{money(listing.price)}</p>
+            <p className="mt-2 text-sm text-muted">
+              Core {money(facts.core)}
+              {facts.sample ? " — example only, not a shop charge." : "."} Tag total {money(listing.price + facts.core)}.
+            </p>
             {listing.acceptsOffers && listing.status === "active" ? (
-              <p className="mt-1 text-sm text-muted">Floor {money(listing.floor)} — offers at or above it get held.</p>
+              <p className="mt-1 text-sm text-muted">Floor {money(listing.floor)} — offers at or above it get held on this board only.</p>
             ) : null}
             <p className="mt-3 flex items-start gap-2 text-sm text-muted">
               <MapPin className="mt-0.5 size-4 shrink-0 text-rust" aria-hidden="true" />
@@ -120,6 +145,29 @@ function ListingPage() {
             ) : (
               <p className="mt-3 text-sm text-muted">Private seller. Meet in a public lot in {listing.city}.</p>
             )}
+            <p className="mt-3 text-sm text-muted">{facts.pickup}</p>
+            <p className="mt-1 text-sm text-muted">{facts.shipping}</p>
+            {facts.phone ? <p className="mt-1 text-sm text-fg">Seller phone {facts.phone}</p> : null}
+            <div className="mt-4 grid gap-2">
+              <a className={btn()} href={mailto}>
+                Check availability
+              </a>
+              <a className={btn("line")} href={mailto}>
+                Contact seller
+              </a>
+              <p className="text-sm text-muted">
+                {facts.sample
+                  ? "Emailing the desk does not hold this part. Sample tags are not live stock."
+                  : "This emails the Junk Car Boys desk with the tag. It does not charge a card."}{" "}
+                <Link to="/inventory" className="text-rust">
+                  Real yards and phones
+                </Link>
+                {" · "}
+                <Link to="/sell" className="text-rust">
+                  List a part
+                </Link>
+              </p>
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <Stamp>{listing.sellerType === "yard" ? "Yard" : "Private"}</Stamp>
               <Stamp>{listing.condition}</Stamp>
@@ -300,15 +348,24 @@ function FitCheck({
   yearEnd,
   make,
   model,
+  engineNote,
+  trim,
+  oem,
 }: {
   yearStart: number;
   yearEnd: number;
   make: string;
   model: string;
+  engineNote: string;
+  trim: string;
+  oem: string;
 }) {
   const [year, setYear] = useState(2018);
   const [vehMake, setVehMake] = useState(make);
   const [vehModel, setVehModel] = useState(model);
+  const [engine, setEngine] = useState("");
+  const [vehTrim, setVehTrim] = useState("");
+  const [number, setNumber] = useState("");
   const [result, setResult] = useState("");
   const models = useMemo(() => VEHICLES.filter((vehicle) => vehicle.make === vehMake), [vehMake]);
 
@@ -319,12 +376,40 @@ function FitCheck({
         event.preventDefault();
         const same = vehMake === make && vehModel === model;
         const inYears = year >= yearStart && year <= yearEnd;
-        if (same && inYears) setResult(`Yes. A ${year} ${vehMake} ${vehModel} is inside this donor range.`);
-        else if (same) setResult(`Same truck, wrong years. This pull is only ${yearsLabel(yearStart, yearEnd)}.`);
-        else setResult(`No. This tag is a ${make} ${model}, not a ${vehMake} ${vehModel}.`);
+        const notes: string[] = [];
+        if (same && inYears) notes.push(`Year and model fit a ${year} ${vehMake} ${vehModel}.`);
+        else if (same) notes.push(`Same vehicle, wrong years. This pull is only ${yearsLabel(yearStart, yearEnd)}.`);
+        else notes.push(`No. This tag is a ${make} ${model}, not a ${vehMake} ${vehModel}.`);
+        const engineToken = engine.trim().toLowerCase();
+        if (engineToken) {
+          notes.push(
+            engineNote.toLowerCase().includes(engineToken)
+              ? `Engine note mentions “${engine.trim()}”.`
+              : `Engine note does not mention “${engine.trim()}”. Read it before you buy: ${engineNote}`,
+          );
+        }
+        if (vehTrim.trim()) {
+          notes.push(
+            trim && trim.toLowerCase().includes(vehTrim.trim().toLowerCase())
+              ? `Trim matches ${trim}.`
+              : trim
+                ? `This tag says trim ${trim}, not ${vehTrim.trim()}.`
+                : "No trim is written on this tag. Do not assume it fits.",
+          );
+        }
+        if (number.trim()) {
+          notes.push(
+            oem
+              ? oem.replace(/[^a-z0-9]/gi, "").toLowerCase() === number.replace(/[^a-z0-9]/gi, "").toLowerCase()
+                ? "OEM number matches this tag."
+                : `OEM on the tag is ${oem}. Yours does not match.`
+              : "No OEM number or VIN is on this tag. Match the casting number on the part itself.",
+          );
+        }
+        setResult(notes.join(" "));
       }}
     >
-      <p className="font-display text-xl uppercase text-fg">Will it fit my truck?</p>
+      <p className="font-display text-xl uppercase text-fg">Will it fit?</p>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <select className={field} value={year} onChange={(event) => setYear(Number(event.target.value))} aria-label="Your year">
           {Array.from({ length: 29 }, (_, index) => 2026 - index).map((item) => (
@@ -351,6 +436,9 @@ function FitCheck({
             <option key={vehicle.model}>{vehicle.model}</option>
           ))}
         </select>
+        <input className={field} value={engine} aria-label="Your engine" placeholder="Engine" onChange={(event) => setEngine(event.target.value)} />
+        <input className={field} value={vehTrim} aria-label="Your trim" placeholder="Trim" onChange={(event) => setVehTrim(event.target.value)} />
+        <input className={field} value={number} aria-label="OEM number or VIN" placeholder="OEM or VIN" onChange={(event) => setNumber(event.target.value)} />
       </div>
       <button className={`${btn("line")} mt-3`} type="submit">
         Check fit

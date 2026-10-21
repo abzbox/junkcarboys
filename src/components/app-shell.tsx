@@ -9,7 +9,7 @@ import { useBoard } from "@/lib/store";
 const NAV = [
   { to: "/", label: "Home" },
   { to: "/yard", label: "Find Parts" },
-  { to: "/sell", label: "Sell Parts" },
+  { to: "/sell", label: "List a part" },
   { to: "/inventory", label: "Junkyard Inventory" },
   { to: "/guide", label: "How It Works" },
   { to: "/contact", label: "Contact" },
@@ -18,7 +18,7 @@ const NAV = [
 const DOCK = [
   { to: "/", label: "Home", icon: Home },
   { to: "/yard", label: "Find", icon: Search },
-  { to: "/sell", label: "Sell", icon: Tag },
+  { to: "/sell", label: "List", icon: Tag },
   { to: "/inventory", label: "Yards", icon: LayoutGrid },
   { to: "/deals", label: "Deals", icon: Handshake },
 ] as const;
@@ -178,7 +178,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <ul className="mt-2 space-y-1 text-sm text-white/80">
               <li><Link to="/" className="inline-flex min-h-10 items-center">Home</Link></li>
               <li><Link to="/yard" search={yardQuery()} className="inline-flex min-h-10 items-center">Find Parts</Link></li>
-              <li><Link to="/sell" className="inline-flex min-h-10 items-center">Sell Parts</Link></li>
+              <li><Link to="/sell" className="inline-flex min-h-10 items-center">List a part</Link></li>
               <li><Link to="/inventory" className="inline-flex min-h-10 items-center">Junkyard Inventory</Link></li>
               <li><Link to="/guide" className="inline-flex min-h-10 items-center">How It Works</Link></li>
               <li><Link to="/contact" className="inline-flex min-h-10 items-center">Contact</Link></li>

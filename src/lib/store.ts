@@ -5,6 +5,7 @@ import {
   SEED,
   WANTED_SEED,
   photoFor,
+  DESK_EMAIL,
   type Condition,
   type Listing,
   type Wanted,
@@ -57,6 +58,11 @@ export type NewListing = {
   photo?: string;
   asYard: boolean;
   bin?: string;
+  oem?: string;
+  trim?: string;
+  core?: number;
+  phone?: string;
+  pickup?: string;
 };
 
 type Persisted = {
@@ -187,6 +193,16 @@ export const useBoard = create<BoardState>()(
             : "Private sale. Meet in a public lot. No warranty unless you wrote one.",
           status: "active",
           mine: true,
+          availability: "seller",
+          checkedLabel: "Posted by the seller. Not checked by a yard.",
+          core: Math.max(0, Math.round(draft.core ?? 0)),
+          pickup: draft.pickup?.trim() || `Meet in a public lot in ${profile.city || "Worcester, MA"}.`,
+          shipping: "Pickup only, unless the seller wrote a shipping plan in the description.",
+          contact: DESK_EMAIL,
+          oem: draft.oem?.trim() ?? "",
+          engine: draft.engineNote.trim(),
+          trim: draft.trim?.trim() ?? "",
+          phone: draft.phone?.trim() ?? "",
         };
         set((state) => ({ listings: [listing, ...state.listings] }));
         return id;

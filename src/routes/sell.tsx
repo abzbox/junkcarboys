@@ -44,6 +44,11 @@ function SellPage() {
   const [condition, setCondition] = useState<Condition>("Yard pull");
   const [price, setPrice] = useState("80");
   const [engineNote, setEngineNote] = useState("");
+  const [trim, setTrim] = useState("");
+  const [oem, setOem] = useState("");
+  const [core, setCore] = useState("0");
+  const [phone, setPhone] = useState("");
+  const [pickup, setPickup] = useState("");
   const [description, setDescription] = useState("");
   const [asYard, setAsYard] = useState(false);
   const [acceptsOffers, setAcceptsOffers] = useState(true);
@@ -81,14 +86,19 @@ function SellPage() {
       description,
       photo: photo || undefined,
       asYard,
+      oem,
+      trim,
+      core: Number(core) || 0,
+      phone,
+      pickup,
     };
   }
 
   return (
     <Page className="py-6">
-      <h1 className="font-display text-4xl uppercase text-fg">Put it on the board</h1>
+      <h1 className="font-display text-4xl uppercase text-fg">List a part</h1>
       <p className="mt-2 max-w-2xl text-muted">
-        Posting as {profile.name} in {profile.city}. One part, or paste a yard sheet — one line each, price at the end.
+        Posting as {profile.name} in {profile.city}. Add a photo, the car it came off, condition, price, and how a buyer reaches you.
       </p>
       <div className="mt-4 flex gap-2">
         <button type="button" className={btn(mode === "one" ? "rust" : "line")} onClick={() => setMode("one")}>
@@ -209,6 +219,44 @@ function SellPage() {
               value={engineNote}
               onChange={(event) => setEngineNote(event.target.value)}
               placeholder="5.0 and 2.7 EcoBoost. Not the hybrid."
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className={labelCls} htmlFor="trim">
+                  Trim
+                </label>
+                <input id="trim" className={field} value={trim} onChange={(event) => setTrim(event.target.value)} placeholder="XLT, LX, SR5" />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="oem">
+                  OEM number
+                </label>
+                <input id="oem" className={field} value={oem} onChange={(event) => setOem(event.target.value)} placeholder="Number on the part" />
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className={labelCls} htmlFor="core">
+                  Core charge
+                </label>
+                <input id="core" inputMode="numeric" className={field} value={core} onChange={(event) => setCore(event.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="phone">
+                  Phone
+                </label>
+                <input id="phone" inputMode="tel" className={field} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Buyer can call you" />
+              </div>
+            </div>
+            <label className={labelCls} htmlFor="pickup">
+              Pickup or shipping
+            </label>
+            <input
+              id="pickup"
+              className={field}
+              value={pickup}
+              onChange={(event) => setPickup(event.target.value)}
+              placeholder="Yard counter, or a public lot in Worcester. No shipping."
             />
             <label className={labelCls} htmlFor="desc">
               Description

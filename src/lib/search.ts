@@ -16,6 +16,8 @@ export type YardSearch = {
   miles: string;
   offers: string;
   saved: string;
+  engine: string;
+  fit: string;
 };
 
 export function yardQuery(partial: Partial<YardSearch> = {}): YardSearch {
@@ -31,6 +33,8 @@ export function yardQuery(partial: Partial<YardSearch> = {}): YardSearch {
     miles: "",
     offers: "",
     saved: "",
+    engine: "",
+    fit: "",
     ...partial,
   };
 }
@@ -53,6 +57,9 @@ export function haystack(listing: Listing) {
       listing.sellerName,
       listing.description,
       listing.engineNote,
+      listing.engine ?? "",
+      listing.trim ?? "",
+      listing.oem ?? "",
       listing.condition,
       categoryLabel(listing.category),
       listing.aliases.join(" "),
@@ -94,6 +101,16 @@ export function filterListings(
     if (search.year) {
       const year = Number(search.year);
       if (!Number.isFinite(year) || year < listing.yearStart || year > listing.yearEnd) return false;
+    }
+    if (search.engine) {
+      const engineHay = norm(`${listing.engine ?? ""} ${listing.engineNote} ${listing.trim ?? ""}`);
+      if (!engineHay.includes(norm(search.engine))) return false;
+    }
+    if (search.fit) {
+      const fitHay = norm(
+        `${listing.oem ?? ""} ${listing.engineNote} ${listing.description} ${listing.aliases.join(" ")} ${listing.trim ?? ""}`,
+      );
+      if (!fitHay.includes(norm(search.fit))) return false;
     }
     if (search.offers === "1" && !listing.acceptsOffers) return false;
     if (Number.isFinite(max) && search.max && listing.price > max) return false;

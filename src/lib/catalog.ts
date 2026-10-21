@@ -1,6 +1,8 @@
 import { yearsLabel } from "@/lib/format";
 
 export const BOARD_CLOCK = Date.UTC(2026, 9, 21, 15, 30, 0);
+export const BOARD_CHECKED = "October 21, 2026";
+export const DESK_EMAIL = "junkcarboyscom@gmail.com";
 
 export type CategoryId =
   | "drivetrain"
@@ -43,6 +45,16 @@ export type Listing = {
   status: "active" | "sold";
   mine?: boolean;
   pulled?: boolean;
+  availability: "sample" | "seller";
+  checkedLabel: string;
+  core: number;
+  pickup: string;
+  shipping: string;
+  contact: string;
+  oem: string;
+  engine: string;
+  trim: string;
+  phone: string;
 };
 
 export type Wanted = {
@@ -243,7 +255,15 @@ type Seed = {
   pulled?: boolean;
 };
 
+function sampleCore(part: string) {
+  if (part === "Alternator" || part === "Starter") return 15;
+  if (part === "AC compressor") return 20;
+  if (part === "Radiator") return 10;
+  return 0;
+}
+
 function listing(s: Seed): Listing {
+  const yard = s.sellerType === "yard";
   return {
     id: s.id,
     title: `${yearsLabel(s.yearStart, s.yearEnd)} ${s.make} ${s.model} ${s.part}`,
@@ -272,6 +292,43 @@ function listing(s: Seed): Listing {
     warranty: warrantyFor(s.sellerType, s.condition),
     status: "active",
     pulled: s.pulled,
+    availability: "sample",
+    checkedLabel: `Sample tag. Written ${BOARD_CHECKED}. Not confirmed with a yard.`,
+    core: sampleCore(s.part),
+    pickup: yard
+      ? `Counter pickup at ${s.yardName ?? s.sellerName} in ${s.city}. Quote bin ${s.bin ?? "the tag"}.`
+      : `Meet in a public lot in ${s.city}. Do not go to a house.`,
+    shipping: "Pickup only. This board does not ship parts.",
+    contact: DESK_EMAIL,
+    oem: "",
+    engine: s.engineNote,
+    trim: "",
+    phone: "",
+  };
+}
+
+export function listingFacts(listing: Listing) {
+  const sample = listing.availability ? listing.availability === "sample" : !listing.mine;
+  return {
+    sample,
+    label: sample ? "Sample" : "Seller listing",
+    checked:
+      listing.checkedLabel ||
+      (sample
+        ? `Sample tag. Written ${BOARD_CHECKED}. Not confirmed with a yard.`
+        : "Posted by the seller. Not checked by a yard."),
+    core: listing.core ?? 0,
+    pickup:
+      listing.pickup ||
+      (listing.sellerType === "yard"
+        ? `Counter pickup in ${listing.city}.`
+        : `Meet in a public lot in ${listing.city}.`),
+    shipping: listing.shipping || "Pickup only. This board does not ship parts.",
+    contact: listing.contact || DESK_EMAIL,
+    oem: listing.oem ?? "",
+    engine: listing.engine || listing.engineNote,
+    trim: listing.trim ?? "",
+    phone: listing.phone ?? "",
   };
 }
 
